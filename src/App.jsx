@@ -117,7 +117,8 @@ async function fetchLivePrice(ticker) {
   try {
     const res = await fetch(`${BACKEND_URL}/api/price/${ticker.toUpperCase()}`);
     const data = await res.json();
-    return data.price || null;
+    if (data.price) return data;
+    return null;
   } catch {
     return null;
   }
@@ -275,15 +276,16 @@ export default function App() {
     setLoading(true); setError(null); setResult(null);
     try {
       // Fetch AI analysis and live price in parallel
-      const [data, livePrice] = await Promise.all([
+      const [data, priceData] = await Promise.all([
         analyzeStock(ticker.trim()),
         fetchLivePrice(ticker.trim())
       ]);
-      // Override simulated price with real price if available
-      if (livePrice) {
-        data.currentPrice = livePrice;
+      if (priceData?.price) {
+        data.currentPrice = priceData.price;
+        data.priceChange = priceData.change;
+        data.priceChangePct = priceData.changePct;
         data.livePrice = true;
-        if (data.commandCenter) data.commandCenter.currentPrice = livePrice;
+        if (data.commandCenter) data.commandCenter.currentPrice = priceData.price;
       }
       setResult(data);
       setResTab("command");
@@ -363,6 +365,11 @@ export default function App() {
                         ? <span style={{ fontSize:9, background:"rgba(0,255,157,0.15)", border:"1px solid rgba(0,255,157,0.4)", borderRadius:3, padding:"2px 6px", color:"#00ff9d", letterSpacing:1, fontWeight:700 }}>● LIVE</span>
                         : <span style={{ fontSize:9, background:"rgba(255,214,10,0.1)", border:"1px solid rgba(255,214,10,0.3)", borderRadius:3, padding:"2px 6px", color:"#ffd60a", letterSpacing:1 }}>SIMULATED</span>
                       }
+                      {result.livePrice && result.priceChange !== undefined && (
+                        <span style={{ fontSize:12, fontWeight:700, color: result.priceChange >= 0 ? "#00ff9d" : "#ff6b6b" }}>
+                          {result.priceChange >= 0 ? "▲" : "▼"} {Math.abs(result.priceChange).toFixed(2)} ({Math.abs(result.priceChangePct).toFixed(2)}%)
+                        </span>
+                      )}
                     </div>
                     {currency.code!=="USD" && <div style={{ fontSize:9, color:"#888" }}>USD ${fmt(result.currentPrice)} · 1 USD = {currency.rate} {currency.code}</div>}
                   </div>
