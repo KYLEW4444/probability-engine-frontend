@@ -284,7 +284,11 @@ export default function App() {
         data.currentPrice = priceData.price;
         data.priceChange = priceData.change;
         data.priceChangePct = priceData.changePct;
+        data.priceOpen = priceData.open;
+        data.priceHigh = priceData.high;
+        data.priceLow = priceData.low;
         data.livePrice = true;
+        if (priceData.companyName) data.companyName = priceData.companyName;
         if (data.commandCenter) data.commandCenter.currentPrice = priceData.price;
       }
       setResult(data);
@@ -372,6 +376,13 @@ export default function App() {
                       )}
                     </div>
                     {currency.code!=="USD" && <div style={{ fontSize:9, color:"#888" }}>USD ${fmt(result.currentPrice)} · 1 USD = {currency.rate} {currency.code}</div>}
+                    {result.livePrice && result.priceOpen && (
+                      <div style={{ display:"flex", gap:12, marginTop:4 }}>
+                        <span style={{ fontSize:10, color:"#888" }}>O <span style={{ color:"#fff" }}>{C(result.priceOpen)}</span></span>
+                        <span style={{ fontSize:10, color:"#888" }}>H <span style={{ color:"#00ff9d" }}>{C(result.priceHigh)}</span></span>
+                        <span style={{ fontSize:10, color:"#888" }}>L <span style={{ color:"#ff6b6b" }}>{C(result.priceLow)}</span></span>
+                      </div>
+                    )}
                   </div>
                   <div style={{ textAlign:"right" }}>
                     <div style={{ fontSize:18, fontWeight:700, color:dc }}>{cc?.verdict} <span style={{ fontSize:12, color:"#ccc" }}>{cc?.verdictStrength}</span></div>
