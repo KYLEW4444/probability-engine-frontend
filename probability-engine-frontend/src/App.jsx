@@ -1,18 +1,34 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
 // ── utils ─────────────────────────────────────────────────────────────────────
 const probColor = (p) => p >= 65 ? "#00ff9d" : p >= 50 ? "#ffd60a" : "#ff6b6b";
 const dirColor  = (d) => d === "BULLISH" ? "#00ff9d" : d === "BEARISH" ? "#ff6b6b" : "#ffd60a";
 const fmt = (n, d=2) => typeof n === "number" ? n.toFixed(d) : n;
 
-function speak(text) {
-  if (!window.speechSynthesis) return;
+// Toggle speak on/off
+let currentlySpeaking = false;
+function toggleSpeak(text, onDone) {
+  if (!window.speechSynthesis) return false;
+  if (currentlySpeaking) {
+    window.speechSynthesis.cancel();
+    currentlySpeaking = false;
+    if (onDone) onDone(false);
+    return false;
+  }
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.rate = 0.92; u.pitch = 1; u.volume = 1;
+  u.onend = () => { currentlySpeaking = false; if (onDone) onDone(false); };
+  u.onerror = () => { currentlySpeaking = false; if (onDone) onDone(false); };
   window.speechSynthesis.speak(u);
+  currentlySpeaking = true;
+  if (onDone) onDone(true);
+  return true;
 }
-function stopSpeak() { window.speechSynthesis?.cancel(); }
+function stopSpeak() {
+  window.speechSynthesis?.cancel();
+  currentlySpeaking = false;
+}
 
 function nowStamp() {
   const d = new Date();
@@ -54,16 +70,28 @@ function fmtC(v, cur) {
 // ── CURRENCY SELECTOR ─────────────────────────────────────────────────────────
 function CurrencySelector({ currency, onChange }) {
   const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  // Close when clicking outside
+  useEffect(() => {
+    function handleClick(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("touchstart", handleClick);
+    return () => { document.removeEventListener("mousedown", handleClick); document.removeEventListener("touchstart", handleClick); };
+  }, []);
+
   return (
-    <div style={{ position:"relative" }}>
+    <div ref={ref} style={{ position:"relative" }}>
       <button onClick={() => setOpen(!open)} style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(0,255,157,0.3)", borderRadius:6, padding:"6px 12px", color:"#fff", fontSize:11, fontFamily:"'Courier New',monospace", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
         <span>{currency.flag}</span>
         <span style={{ color:"#00ff9d", fontWeight:700 }}>{currency.code}</span>
-        <span style={{ color:"#666", fontSize:9 }}>▼</span>
+        <span style={{ color:"#666", fontSize:9 }}>{open ? "▲" : "▼"}</span>
       </button>
       {open && (
-        <div style={{ position:"absolute", right:0, top:"110%", zIndex:200, background:"#0d1520", border:"1px solid rgba(0,255,157,0.25)", borderRadius:8, width:230, maxHeight:300, overflowY:"auto", boxShadow:"0 8px 32px rgba(0,0,0,0.7)" }}>
-          <div style={{ padding:"7px 12px", fontSize:9, color:"#666", letterSpacing:2, borderBottom:"1px solid rgba(255,255,255,0.07)" }}>SELECT DISPLAY CURRENCY</div>
+        <div style={{ position:"fixed", right:14, zIndex:999, background:"#0d1520", border:"1px solid rgba(0,255,157,0.25)", borderRadius:8, width:220, maxHeight:"60vh", overflowY:"auto", boxShadow:"0 8px 32px rgba(0,0,0,0.9)", bottom:80 }}>
+          <div style={{ padding:"7px 12px", fontSize:9, color:"#666", letterSpacing:2, borderBottom:"1px solid rgba(255,255,255,0.07)", position:"sticky", top:0, background:"#0d1520" }}>SELECT DISPLAY CURRENCY</div>
           {CURRENCIES.map(c => (
             <button key={c.code} onClick={() => { onChange(c); setOpen(false); }} style={{ width:"100%", background:c.code===currency.code?"rgba(0,255,157,0.08)":"none", border:"none", padding:"8px 12px", textAlign:"left", cursor:"pointer", display:"flex", alignItems:"center", gap:10, fontFamily:"'Courier New',monospace" }}>
               <span style={{ fontSize:15 }}>{c.flag}</span>
@@ -176,7 +204,7 @@ function StrikeCard({ opt, accent, stamp, currency }) {
       {opt.tip && (
         <div style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
           <div style={{ fontSize:11, color:"#ddd", flex:1, lineHeight:1.5 }}>💡 {opt.tip}</div>
-          <button onClick={() => speak(opt.tip)} style={{ background:"none", border:"1px solid rgba(255,255,255,0.12)", borderRadius:4, color:"#777", fontSize:13, padding:"2px 8px", cursor:"pointer" }}>🔊</button>
+          <button onClick={() => toggleSpeak(opt.tip)} style={{ background:"none", border:"1px solid rgba(255,255,255,0.12)", borderRadius:4, color:"#777", fontSize:13, padding:"2px 8px", cursor:"pointer" }}>🔊</button>
         </div>
       )}
     </div>
@@ -216,6 +244,21 @@ export default function App() {
   const stamp = nowStamp();
   const C = useCallback((v) => fmtC(v, currency), [currency]);
 
+  // Inject mobile-friendly global styles
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.textContent = `
+      * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+      body { margin: 0; padding: 0; overflow-x: hidden; background: #080c14; }
+      input, select, textarea { font-size: 16px !important; }
+      .tabs-scroll { display: flex; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
+      .tabs-scroll::-webkit-scrollbar { display: none; }
+      .tabs-scroll button { scroll-snap-align: start; flex-shrink: 0; }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
+
   const handleAnalyze = useCallback(async () => {
     if (!ticker.trim() || loading) return;
     setLoading(true); setError(null); setResult(null);
@@ -250,7 +293,7 @@ export default function App() {
         </div>
 
         {/* MAIN NAV */}
-        <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.08)", marginBottom:18 }}>
+        <div className="tabs-scroll" style={{ borderBottom:"1px solid rgba(255,255,255,0.08)", marginBottom:18 }}>
           {[["analyze","📊 ANALYZE"],["learn","📚 LEARN"],["faq","❓ FAQ"]].map(([id,label]) => (
             <button key={id} onClick={() => setMainTab(id)} style={{ background:"none", border:"none", padding:"8px 14px", fontSize:9, letterSpacing:2, fontFamily:"'Courier New',monospace", color:mainTab===id?"#00ff9d":"#666", cursor:"pointer", fontWeight:700, borderBottom:mainTab===id?"2px solid #00ff9d":"2px solid transparent", marginBottom:-1 }}>{label}</button>
           ))}
@@ -305,7 +348,7 @@ export default function App() {
                 </div>
 
                 {/* result tabs */}
-                <div style={{ display:"flex", borderBottom:"1px solid rgba(255,255,255,0.08)", marginBottom:14, overflowX:"auto", gap:0 }}>
+                <div className="tabs-scroll" style={{ borderBottom:"1px solid rgba(255,255,255,0.08)", marginBottom:14 }}>
                   {[
                     ["command","🎯 COMMAND CENTER"],
                     ["iv","🌡️ PILLAR 1 · IV"],
@@ -338,7 +381,7 @@ export default function App() {
                           <ProbRing value={cc.confidenceScore} size={64} />
                           <div style={{ fontSize:9, color:"#aaa", marginTop:4 }}>CONFIDENCE</div>
                         </div>
-                        <button onClick={() => { setSpeaking(true); speak(cc.spokenSummary); setTimeout(()=>setSpeaking(false),15000); }} style={{ background:"rgba(0,255,157,0.1)", border:"1px solid rgba(0,255,157,0.3)", borderRadius:6, color:speaking?"#00ff9d":"#aaa", fontSize:20, padding:"8px 12px", cursor:"pointer", flexShrink:0 }}>{speaking?"🔊":"🔈"}</button>
+                        <button onClick={() => { toggleSpeak(cc.spokenSummary, (s) => setSpeaking(s)); }} style={{ background:"rgba(0,255,157,0.1)", border:"1px solid rgba(0,255,157,0.3)", borderRadius:6, color:speaking?"#00ff9d":"#aaa", fontSize:20, padding:"8px 12px", cursor:"pointer", flexShrink:0 }}>{speaking?"🔊":"🔈"}</button>
                       </div>
                       <div style={{ fontSize:13, color:"#ddd", lineHeight:1.8, marginBottom:14 }}>{cc.summary}</div>
 
@@ -415,7 +458,7 @@ export default function App() {
                     <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, padding:12 }}>
                       <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:5 }}>💡 PLAIN ENGLISH</div>
                       <div style={{ fontSize:12, color:"#ddd", lineHeight:1.7 }}>{result.pillar1_iv.explanation}</div>
-                      <button onClick={() => speak(result.pillar1_iv.explanation)} style={{ marginTop:8, background:"none", border:"1px solid rgba(0,255,157,0.2)", borderRadius:4, color:"#00ff9d", fontSize:10, padding:"4px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>🔊 HEAR THIS</button>
+                      <button onClick={() => toggleSpeak(result.pillar1_iv.explanation)} style={{ marginTop:8, background:"none", border:"1px solid rgba(0,255,157,0.2)", borderRadius:4, color:"#00ff9d", fontSize:10, padding:"4px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>🔊 HEAR THIS</button>
                     </div>
                   </div>
                 )}
@@ -440,7 +483,7 @@ export default function App() {
                     <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, padding:12 }}>
                       <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:5 }}>💡 PLAIN ENGLISH</div>
                       <div style={{ fontSize:12, color:"#ddd", lineHeight:1.7 }}>{result.pillar2_flow.explanation}</div>
-                      <button onClick={() => speak(result.pillar2_flow.explanation)} style={{ marginTop:8, background:"none", border:"1px solid rgba(0,255,157,0.2)", borderRadius:4, color:"#00ff9d", fontSize:10, padding:"4px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>🔊 HEAR THIS</button>
+                      <button onClick={() => toggleSpeak(result.pillar2_flow.explanation)} style={{ marginTop:8, background:"none", border:"1px solid rgba(0,255,157,0.2)", borderRadius:4, color:"#00ff9d", fontSize:10, padding:"4px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>🔊 HEAR THIS</button>
                     </div>
                   </div>
                 )}
@@ -461,7 +504,7 @@ export default function App() {
                     <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, padding:12 }}>
                       <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:5 }}>💡 PLAIN ENGLISH</div>
                       <div style={{ fontSize:12, color:"#ddd", lineHeight:1.7 }}>{result.pillar3_delta.explanation}</div>
-                      <button onClick={() => speak(result.pillar3_delta.explanation)} style={{ marginTop:8, background:"none", border:"1px solid rgba(0,255,157,0.2)", borderRadius:4, color:"#00ff9d", fontSize:10, padding:"4px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>🔊 HEAR THIS</button>
+                      <button onClick={() => toggleSpeak(result.pillar3_delta.explanation)} style={{ marginTop:8, background:"none", border:"1px solid rgba(0,255,157,0.2)", borderRadius:4, color:"#00ff9d", fontSize:10, padding:"4px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>🔊 HEAR THIS</button>
                     </div>
                   </div>
                 )}
@@ -482,7 +525,7 @@ export default function App() {
                     <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, padding:12 }}>
                       <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:5 }}>💡 PLAIN ENGLISH</div>
                       <div style={{ fontSize:12, color:"#ddd", lineHeight:1.7 }}>{result.pillar4_oi.explanation}</div>
-                      <button onClick={() => speak(result.pillar4_oi.explanation)} style={{ marginTop:8, background:"none", border:"1px solid rgba(0,255,157,0.2)", borderRadius:4, color:"#00ff9d", fontSize:10, padding:"4px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>🔊 HEAR THIS</button>
+                      <button onClick={() => toggleSpeak(result.pillar4_oi.explanation)} style={{ marginTop:8, background:"none", border:"1px solid rgba(0,255,157,0.2)", borderRadius:4, color:"#00ff9d", fontSize:10, padding:"4px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>🔊 HEAR THIS</button>
                     </div>
                   </div>
                 )}
@@ -512,7 +555,7 @@ export default function App() {
                     <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, padding:12 }}>
                       <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:5 }}>💡 PLAIN ENGLISH</div>
                       <div style={{ fontSize:12, color:"#ddd", lineHeight:1.7 }}>{result.pillar5_catalyst.explanation}</div>
-                      <button onClick={() => speak(result.pillar5_catalyst.explanation)} style={{ marginTop:8, background:"none", border:"1px solid rgba(0,255,157,0.2)", borderRadius:4, color:"#00ff9d", fontSize:10, padding:"4px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>🔊 HEAR THIS</button>
+                      <button onClick={() => toggleSpeak(result.pillar5_catalyst.explanation)} style={{ marginTop:8, background:"none", border:"1px solid rgba(0,255,157,0.2)", borderRadius:4, color:"#00ff9d", fontSize:10, padding:"4px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>🔊 HEAR THIS</button>
                     </div>
                   </div>
                 )}
@@ -585,7 +628,7 @@ export default function App() {
                     <div style={{ fontSize:13, fontWeight:700, color:"#fff", marginBottom:7 }}>{item.icon} {item.title}</div>
                     <div style={{ fontSize:12, color:"#ddd", lineHeight:1.7 }}>{item.body}</div>
                   </div>
-                  <button onClick={() => speak(item.speak)} style={{ background:"rgba(0,255,157,0.07)", border:"1px solid rgba(0,255,157,0.2)", borderRadius:6, color:"#00ff9d", fontSize:16, padding:"5px 10px", cursor:"pointer", flexShrink:0 }}>🔊</button>
+                  <button onClick={() => toggleSpeak(item.speak)} style={{ background:"rgba(0,255,157,0.07)", border:"1px solid rgba(0,255,157,0.2)", borderRadius:6, color:"#00ff9d", fontSize:16, padding:"5px 10px", cursor:"pointer", flexShrink:0 }}>🔊</button>
                 </div>
               </div>
             ))}
@@ -605,7 +648,7 @@ export default function App() {
                 {openFaq===i && (
                   <div style={{ padding:"0 14px 14px" }}>
                     <div style={{ fontSize:12, color:"#ddd", lineHeight:1.8, marginBottom:10 }}>{item.a}</div>
-                    <button onClick={() => speak(item.speak)} style={{ background:"rgba(0,255,157,0.07)", border:"1px solid rgba(0,255,157,0.2)", borderRadius:6, color:"#00ff9d", fontSize:9, padding:"5px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace", letterSpacing:2 }}>🔊 HEAR THIS</button>
+                    <button onClick={() => toggleSpeak(item.speak)} style={{ background:"rgba(0,255,157,0.07)", border:"1px solid rgba(0,255,157,0.2)", borderRadius:6, color:"#00ff9d", fontSize:9, padding:"5px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace", letterSpacing:2 }}>🔊 HEAR THIS</button>
                   </div>
                 )}
               </div>
