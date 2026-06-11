@@ -87,22 +87,22 @@ function CurrencySelector({ currency, onChange }) {
       <button onClick={() => setOpen(!open)} style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(0,255,157,0.3)", borderRadius:6, padding:"6px 12px", color:"#fff", fontSize:11, fontFamily:"'Courier New',monospace", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
         <span>{currency.flag}</span>
         <span style={{ color:"#00ff9d", fontWeight:700 }}>{currency.code}</span>
-        <span style={{ color:"#666", fontSize:9 }}>{open ? "▲" : "▼"}</span>
+        <span style={{ color:"#999", fontSize:9 }}>{open ? "▲" : "▼"}</span>
       </button>
       {open && (
         <div style={{ position:"fixed", right:14, zIndex:999, background:"#0d1520", border:"1px solid rgba(0,255,157,0.25)", borderRadius:8, width:220, maxHeight:"60vh", overflowY:"auto", boxShadow:"0 8px 32px rgba(0,0,0,0.9)", bottom:80 }}>
-          <div style={{ padding:"7px 12px", fontSize:9, color:"#666", letterSpacing:2, borderBottom:"1px solid rgba(255,255,255,0.07)", position:"sticky", top:0, background:"#0d1520" }}>SELECT DISPLAY CURRENCY</div>
+          <div style={{ padding:"7px 12px", fontSize:9, color:"#999", letterSpacing:2, borderBottom:"1px solid rgba(255,255,255,0.07)", position:"sticky", top:0, background:"#0d1520" }}>SELECT DISPLAY CURRENCY</div>
           {CURRENCIES.map(c => (
             <button key={c.code} onClick={() => { onChange(c); setOpen(false); }} style={{ width:"100%", background:c.code===currency.code?"rgba(0,255,157,0.08)":"none", border:"none", padding:"8px 12px", textAlign:"left", cursor:"pointer", display:"flex", alignItems:"center", gap:10, fontFamily:"'Courier New',monospace" }}>
               <span style={{ fontSize:15 }}>{c.flag}</span>
               <div style={{ flex:1 }}>
-                <div style={{ fontSize:11, color:c.code===currency.code?"#00ff9d":"#fff", fontWeight:700 }}>{c.code} <span style={{ fontSize:9, color:"#777", fontWeight:400 }}>{c.name}</span></div>
-                <div style={{ fontSize:9, color:"#444" }}>1 USD = {c.rate} {c.code}</div>
+                <div style={{ fontSize:11, color:c.code===currency.code?"#00ff9d":"#fff", fontWeight:700 }}>{c.code} <span style={{ fontSize:9, color:"#bbb", fontWeight:400 }}>{c.name}</span></div>
+                <div style={{ fontSize:9, color:"#bbb" }}>1 USD = {c.rate} {c.code}</div>
               </div>
               {c.code===currency.code && <span style={{ color:"#00ff9d" }}>✓</span>}
             </button>
           ))}
-          <div style={{ padding:"6px 12px", fontSize:8, color:"#333", borderTop:"1px solid rgba(255,255,255,0.05)" }}>SIMULATED RATES · CONNECT EXCHANGERATE-API FOR LIVE</div>
+          <div style={{ padding:"6px 12px", fontSize:8, color:"#666", borderTop:"1px solid rgba(255,255,255,0.05)" }}>SIMULATED RATES · CONNECT EXCHANGERATE-API FOR LIVE</div>
         </div>
       )}
     </div>
@@ -111,6 +111,17 @@ function CurrencySelector({ currency, onChange }) {
 
 // ── API CALL ──────────────────────────────────────────────────────────────────
 const BACKEND_URL = "https://probability-engine-production-7250.up.railway.app";
+
+// Fetch real live price from backend proxy
+async function fetchLivePrice(ticker) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/price/${ticker.toUpperCase()}`);
+    const data = await res.json();
+    return data.price || null;
+  } catch {
+    return null;
+  }
+}
 
 async function analyzeStock(ticker) {
   const res = await fetch(`${BACKEND_URL}/api/analyze`, {
@@ -140,9 +151,9 @@ function Badge({ label, color="#aaa" }) {
 function StatBox({ label, value, sub, color="#fff" }) {
   return (
     <div style={{ background:"rgba(255,255,255,0.04)", border:"1px solid rgba(255,255,255,0.1)", borderRadius:6, padding:"10px 12px" }}>
-      <div style={{ fontSize:9, color:"#aaa", letterSpacing:1, marginBottom:4 }}>{label}</div>
+      <div style={{ fontSize:9, color:"#ccc", letterSpacing:1, marginBottom:4 }}>{label}</div>
       <div style={{ fontSize:14, fontWeight:700, color }}>{value}</div>
-      {sub && <div style={{ fontSize:10, color:"#bbb", marginTop:3, lineHeight:1.4 }}>{sub}</div>}
+      {sub && <div style={{ fontSize:10, color:"#ddd", marginTop:3, lineHeight:1.4 }}>{sub}</div>}
     </div>
   );
 }
@@ -152,7 +163,7 @@ function ScoreBar({ label, score, color }) {
   return (
     <div style={{ marginBottom:10 }}>
       <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
-        <span style={{ fontSize:10, color:"#ddd" }}>{label}</span>
+        <span style={{ fontSize:10, color:"#fff" }}>{label}</span>
         <span style={{ fontSize:10, fontWeight:700, color:c }}>{score}/100</span>
       </div>
       <div style={{ height:5, background:"rgba(255,255,255,0.07)", borderRadius:3, overflow:"hidden" }}>
@@ -174,22 +185,22 @@ function StrikeCard({ opt, accent, stamp, currency }) {
           <div style={{ fontSize:20, fontWeight:700, color:"#fff" }}>{C(opt.strike)}</div>
           {opt.rank===1 && <Badge label="★ TOP PICK" color={accent} />}
           <Badge label={opt.riskLevel} color={rc} />
-          <span style={{ fontSize:10, color:"#aaa" }}>{opt.expiry} · {stamp}</span>
+          <span style={{ fontSize:10, color:"#ccc" }}>{opt.expiry} · {stamp}</span>
         </div>
         <ProbRing value={opt.probability} size={48} />
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:8, marginBottom:8 }}>
-        <div><div style={{ fontSize:9, color:"#aaa", letterSpacing:1 }}>PREMIUM</div><div style={{ fontSize:13, color:"#fff", marginTop:2 }}>{C(opt.premium)}</div></div>
-        <div><div style={{ fontSize:9, color:"#aaa", letterSpacing:1 }}>BREAKEVEN</div><div style={{ fontSize:13, color:"#fff", marginTop:2 }}>{C(opt.breakeven)}</div></div>
-        <div><div style={{ fontSize:9, color:"#aaa", letterSpacing:1 }}>MAX LOSS</div><div style={{ fontSize:13, color:"#ff6b6b", marginTop:2 }}>{C(opt.maxLoss)}</div></div>
-        <div><div style={{ fontSize:9, color:"#aaa", letterSpacing:1 }}>REWARD</div><div style={{ fontSize:13, color:"#ffd60a", marginTop:2 }}>{opt.reward}</div></div>
+        <div><div style={{ fontSize:9, color:"#ccc", letterSpacing:1 }}>PREMIUM</div><div style={{ fontSize:13, color:"#fff", marginTop:2 }}>{C(opt.premium)}</div></div>
+        <div><div style={{ fontSize:9, color:"#ccc", letterSpacing:1 }}>BREAKEVEN</div><div style={{ fontSize:13, color:"#fff", marginTop:2 }}>{C(opt.breakeven)}</div></div>
+        <div><div style={{ fontSize:9, color:"#ccc", letterSpacing:1 }}>MAX LOSS</div><div style={{ fontSize:13, color:"#ff6b6b", marginTop:2 }}>{C(opt.maxLoss)}</div></div>
+        <div><div style={{ fontSize:9, color:"#ccc", letterSpacing:1 }}>REWARD</div><div style={{ fontSize:13, color:"#ffd60a", marginTop:2 }}>{opt.reward}</div></div>
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:8, marginBottom:8 }}>
-        <div><div style={{ fontSize:9, color:"#aaa", letterSpacing:1 }}>DELTA</div><div style={{ fontSize:12, color:"#fff", marginTop:2 }}>{opt.delta}</div></div>
-        <div><div style={{ fontSize:9, color:"#aaa", letterSpacing:1 }}>THETA</div><div style={{ fontSize:12, color:"#ff6b6b", marginTop:2 }}>{opt.theta}</div></div>
-        <div><div style={{ fontSize:9, color:"#aaa", letterSpacing:1 }}>IV</div><div style={{ fontSize:12, color:"#fff", marginTop:2 }}>{opt.iv}%</div></div>
-        <div><div style={{ fontSize:9, color:"#aaa", letterSpacing:1 }}>VOLUME</div><div style={{ fontSize:12, color:"#ffd60a", marginTop:2 }}>{opt.volume?.toLocaleString()}</div></div>
-        <div><div style={{ fontSize:9, color:"#aaa", letterSpacing:1 }}>OPEN INT.</div><div style={{ fontSize:12, color:"#fff", marginTop:2 }}>{opt.openInterest?.toLocaleString()}</div></div>
+        <div><div style={{ fontSize:9, color:"#ccc", letterSpacing:1 }}>DELTA</div><div style={{ fontSize:12, color:"#fff", marginTop:2 }}>{opt.delta}</div></div>
+        <div><div style={{ fontSize:9, color:"#ccc", letterSpacing:1 }}>THETA</div><div style={{ fontSize:12, color:"#ff6b6b", marginTop:2 }}>{opt.theta}</div></div>
+        <div><div style={{ fontSize:9, color:"#ccc", letterSpacing:1 }}>IV</div><div style={{ fontSize:12, color:"#fff", marginTop:2 }}>{opt.iv}%</div></div>
+        <div><div style={{ fontSize:9, color:"#ccc", letterSpacing:1 }}>VOLUME</div><div style={{ fontSize:12, color:"#ffd60a", marginTop:2 }}>{opt.volume?.toLocaleString()}</div></div>
+        <div><div style={{ fontSize:9, color:"#ccc", letterSpacing:1 }}>OPEN INT.</div><div style={{ fontSize:12, color:"#fff", marginTop:2 }}>{opt.openInterest?.toLocaleString()}</div></div>
       </div>
       {volOiRatio > 0 && (
         <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
@@ -203,8 +214,8 @@ function StrikeCard({ opt, accent, stamp, currency }) {
       )}
       {opt.tip && (
         <div style={{ display:"flex", gap:8, alignItems:"flex-start" }}>
-          <div style={{ fontSize:11, color:"#ddd", flex:1, lineHeight:1.5 }}>💡 {opt.tip}</div>
-          <button onClick={() => toggleSpeak(opt.tip)} style={{ background:"none", border:"1px solid rgba(255,255,255,0.12)", borderRadius:4, color:"#777", fontSize:13, padding:"2px 8px", cursor:"pointer" }}>🔊</button>
+          <div style={{ fontSize:11, color:"#fff", flex:1, lineHeight:1.5 }}>💡 {opt.tip}</div>
+          <button onClick={() => toggleSpeak(opt.tip)} style={{ background:"none", border:"1px solid rgba(255,255,255,0.12)", borderRadius:4, color:"#bbb", fontSize:13, padding:"2px 8px", cursor:"pointer" }}>🔊</button>
         </div>
       )}
     </div>
@@ -263,7 +274,17 @@ export default function App() {
     if (!ticker.trim() || loading) return;
     setLoading(true); setError(null); setResult(null);
     try {
-      const data = await analyzeStock(ticker.trim());
+      // Fetch AI analysis and live price in parallel
+      const [data, livePrice] = await Promise.all([
+        analyzeStock(ticker.trim()),
+        fetchLivePrice(ticker.trim())
+      ]);
+      // Override simulated price with real price if available
+      if (livePrice) {
+        data.currentPrice = livePrice;
+        data.livePrice = true;
+        if (data.commandCenter) data.commandCenter.currentPrice = livePrice;
+      }
       setResult(data);
       setResTab("command");
     } catch(e) { setError(e.message || "Analysis failed — try again"); }
@@ -286,8 +307,8 @@ export default function App() {
               <div style={{ width:7, height:7, borderRadius:"50%", background:"#00ff9d", boxShadow:"0 0 10px #00ff9d" }} />
               <span style={{ fontSize:9, color:"#00ff9d", letterSpacing:4 }}>OPTIONS INTELLIGENCE</span>
             </div>
-            <h1 style={{ fontSize:22, fontWeight:700, margin:0, letterSpacing:-1 }}>PROBABILITY ENGINE <span style={{ fontSize:11, color:"#333", fontWeight:400 }}>PRO</span></h1>
-            <p style={{ margin:"2px 0 0", fontSize:9, color:"#444", letterSpacing:2 }}>5-PILLAR OPTIONS ANALYSIS · AI COMMAND CENTER</p>
+            <h1 style={{ fontSize:22, fontWeight:700, margin:0, letterSpacing:-1 }}>PROBABILITY ENGINE <span style={{ fontSize:11, color:"#666", fontWeight:400 }}>PRO</span></h1>
+            <p style={{ margin:"2px 0 0", fontSize:9, color:"#bbb", letterSpacing:2 }}>5-PILLAR OPTIONS ANALYSIS · AI COMMAND CENTER</p>
           </div>
           <CurrencySelector currency={currency} onChange={setCurrency} />
         </div>
@@ -322,7 +343,7 @@ export default function App() {
                 <div style={{ display:"flex", justifyContent:"center", gap:6 }}>
                   {[0,1,2,3,4].map(i => <div key={i} style={{ width:6, height:6, borderRadius:"50%", background:"#00ff9d", animation:`pulse 1.2s ${i*0.2}s ease-in-out infinite` }} />)}
                 </div>
-                <div style={{ marginTop:16, fontSize:9, color:"#333" }}>IV · FLOW · DELTA · OI · CATALYSTS</div>
+                <div style={{ marginTop:16, fontSize:9, color:"#666" }}>IV · FLOW · DELTA · OI · CATALYSTS</div>
                 <style>{`@keyframes pulse{0%,100%{opacity:.15;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}`}</style>
               </div>
             )}
@@ -334,16 +355,22 @@ export default function App() {
                 {/* ticker bar */}
                 <div style={{ background:"rgba(255,255,255,0.03)", border:`1px solid ${dc}35`, borderRadius:8, padding:14, marginBottom:12, display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:10 }}>
                   <div>
-                    <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:3 }}>ANALYZING</div>
-                    <div style={{ fontSize:20, fontWeight:700 }}>{result.ticker} <span style={{ fontSize:12, color:"#bbb", fontWeight:400 }}>{result.companyName}</span></div>
-                    <div style={{ fontSize:22, fontWeight:700, marginTop:2 }}>{C(result.currentPrice)}</div>
-                    {currency.code!=="USD" && <div style={{ fontSize:9, color:"#555" }}>USD ${fmt(result.currentPrice)} · 1 USD = {currency.rate} {currency.code}</div>}
+                    <div style={{ fontSize:9, color:"#ccc", letterSpacing:2, marginBottom:3 }}>ANALYZING</div>
+                    <div style={{ fontSize:20, fontWeight:700 }}>{result.ticker} <span style={{ fontSize:12, color:"#ddd", fontWeight:400 }}>{result.companyName}</span></div>
+                    <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:2 }}>
+                      <div style={{ fontSize:22, fontWeight:700 }}>{C(result.currentPrice)}</div>
+                      {result.livePrice
+                        ? <span style={{ fontSize:9, background:"rgba(0,255,157,0.15)", border:"1px solid rgba(0,255,157,0.4)", borderRadius:3, padding:"2px 6px", color:"#00ff9d", letterSpacing:1, fontWeight:700 }}>● LIVE</span>
+                        : <span style={{ fontSize:9, background:"rgba(255,214,10,0.1)", border:"1px solid rgba(255,214,10,0.3)", borderRadius:3, padding:"2px 6px", color:"#ffd60a", letterSpacing:1 }}>SIMULATED</span>
+                      }
+                    </div>
+                    {currency.code!=="USD" && <div style={{ fontSize:9, color:"#888" }}>USD ${fmt(result.currentPrice)} · 1 USD = {currency.rate} {currency.code}</div>}
                   </div>
                   <div style={{ textAlign:"right" }}>
-                    <div style={{ fontSize:18, fontWeight:700, color:dc }}>{cc?.verdict} <span style={{ fontSize:12, color:"#aaa" }}>{cc?.verdictStrength}</span></div>
-                    <div style={{ fontSize:11, color:"#ddd", marginTop:2 }}>Confidence: <span style={{ color:probColor(cc?.confidenceScore) }}>{cc?.confidenceScore}%</span></div>
-                    <div style={{ fontSize:10, color:"#555", marginTop:3 }}>📡 {result.dataSource}</div>
-                    <div style={{ fontSize:10, color:"#555" }}>🕐 {stamp}</div>
+                    <div style={{ fontSize:18, fontWeight:700, color:dc }}>{cc?.verdict} <span style={{ fontSize:12, color:"#ccc" }}>{cc?.verdictStrength}</span></div>
+                    <div style={{ fontSize:11, color:"#fff", marginTop:2 }}>Confidence: <span style={{ color:probColor(cc?.confidenceScore) }}>{cc?.confidenceScore}%</span></div>
+                    <div style={{ fontSize:10, color:"#888", marginTop:3 }}>📡 {result.dataSource}</div>
+                    <div style={{ fontSize:10, color:"#888" }}>🕐 {stamp}</div>
                   </div>
                 </div>
 
@@ -375,15 +402,15 @@ export default function App() {
                           <div style={{ fontSize:28, fontWeight:700, color:dc, marginBottom:4 }}>
                             {cc.verdict === "BULLISH" ? "📈" : cc.verdict === "BEARISH" ? "📉" : "➡️"} {cc.verdict}
                           </div>
-                          <div style={{ fontSize:12, color:"#aaa" }}>{cc.verdictStrength} signal · {cc.timeframe} outlook · Target: {C(cc.priceTarget)}</div>
+                          <div style={{ fontSize:12, color:"#ccc" }}>{cc.verdictStrength} signal · {cc.timeframe} outlook · Target: {C(cc.priceTarget)}</div>
                         </div>
                         <div style={{ textAlign:"center" }}>
                           <ProbRing value={cc.confidenceScore} size={64} />
-                          <div style={{ fontSize:9, color:"#aaa", marginTop:4 }}>CONFIDENCE</div>
+                          <div style={{ fontSize:9, color:"#ccc", marginTop:4 }}>CONFIDENCE</div>
                         </div>
                         <button onClick={() => { toggleSpeak(cc.spokenSummary, (s) => setSpeaking(s)); }} style={{ background:"rgba(0,255,157,0.1)", border:"1px solid rgba(0,255,157,0.3)", borderRadius:6, color:speaking?"#00ff9d":"#aaa", fontSize:20, padding:"8px 12px", cursor:"pointer", flexShrink:0 }}>{speaking?"🔊":"🔈"}</button>
                       </div>
-                      <div style={{ fontSize:13, color:"#ddd", lineHeight:1.8, marginBottom:14 }}>{cc.summary}</div>
+                      <div style={{ fontSize:13, color:"#fff", lineHeight:1.8, marginBottom:14 }}>{cc.summary}</div>
 
                       {/* BEST CALL + BEST PUT side by side */}
                       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
@@ -391,16 +418,16 @@ export default function App() {
                         <div style={{ background:"rgba(0,255,157,0.06)", border:"1px solid rgba(0,255,157,0.3)", borderRadius:8, padding:14 }}>
                           <div style={{ fontSize:9, color:"#00ff9d", letterSpacing:2, marginBottom:8 }}>▲ BEST CALL RIGHT NOW</div>
                           <div style={{ fontSize:22, fontWeight:700, color:"#fff", marginBottom:4 }}>{C(cc.bestCall?.strike)}</div>
-                          <div style={{ fontSize:11, color:"#aaa", marginBottom:8 }}>{cc.bestCall?.expiry} expiry</div>
+                          <div style={{ fontSize:11, color:"#ccc", marginBottom:8 }}>{cc.bestCall?.expiry} expiry</div>
                           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:8 }}>
-                            <div><div style={{ fontSize:9, color:"#aaa" }}>PREMIUM</div><div style={{ fontSize:13, color:"#fff", fontWeight:700 }}>{C(cc.bestCall?.premium)}</div></div>
-                            <div><div style={{ fontSize:9, color:"#aaa" }}>MAX LOSS</div><div style={{ fontSize:13, color:"#ff6b6b", fontWeight:700 }}>{C(cc.bestCall?.maxLoss)}</div></div>
-                            <div><div style={{ fontSize:9, color:"#aaa" }}>BREAKEVEN</div><div style={{ fontSize:12, color:"#fff" }}>{C(cc.bestCall?.breakeven)}</div></div>
-                            <div><div style={{ fontSize:9, color:"#aaa" }}>REWARD</div><div style={{ fontSize:12, color:"#ffd60a" }}>{cc.bestCall?.reward}</div></div>
+                            <div><div style={{ fontSize:9, color:"#ccc" }}>PREMIUM</div><div style={{ fontSize:13, color:"#fff", fontWeight:700 }}>{C(cc.bestCall?.premium)}</div></div>
+                            <div><div style={{ fontSize:9, color:"#ccc" }}>MAX LOSS</div><div style={{ fontSize:13, color:"#ff6b6b", fontWeight:700 }}>{C(cc.bestCall?.maxLoss)}</div></div>
+                            <div><div style={{ fontSize:9, color:"#ccc" }}>BREAKEVEN</div><div style={{ fontSize:12, color:"#fff" }}>{C(cc.bestCall?.breakeven)}</div></div>
+                            <div><div style={{ fontSize:9, color:"#ccc" }}>REWARD</div><div style={{ fontSize:12, color:"#ffd60a" }}>{cc.bestCall?.reward}</div></div>
                           </div>
                           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                             <ProbRing value={cc.bestCall?.probability||0} size={44} />
-                            <div style={{ fontSize:10, color:"#ddd", flex:1, marginLeft:10, lineHeight:1.5 }}>{cc.bestCall?.whyThis}</div>
+                            <div style={{ fontSize:10, color:"#fff", flex:1, marginLeft:10, lineHeight:1.5 }}>{cc.bestCall?.whyThis}</div>
                           </div>
                         </div>
 
@@ -408,16 +435,16 @@ export default function App() {
                         <div style={{ background:"rgba(255,107,107,0.06)", border:"1px solid rgba(255,107,107,0.3)", borderRadius:8, padding:14 }}>
                           <div style={{ fontSize:9, color:"#ff6b6b", letterSpacing:2, marginBottom:8 }}>▼ BEST PUT (IF REVERSAL)</div>
                           <div style={{ fontSize:22, fontWeight:700, color:"#fff", marginBottom:4 }}>{C(cc.bestPut?.strike)}</div>
-                          <div style={{ fontSize:11, color:"#aaa", marginBottom:8 }}>{cc.bestPut?.expiry} expiry</div>
+                          <div style={{ fontSize:11, color:"#ccc", marginBottom:8 }}>{cc.bestPut?.expiry} expiry</div>
                           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6, marginBottom:8 }}>
-                            <div><div style={{ fontSize:9, color:"#aaa" }}>PREMIUM</div><div style={{ fontSize:13, color:"#fff", fontWeight:700 }}>{C(cc.bestPut?.premium)}</div></div>
-                            <div><div style={{ fontSize:9, color:"#aaa" }}>MAX LOSS</div><div style={{ fontSize:13, color:"#ff6b6b", fontWeight:700 }}>{C(cc.bestPut?.maxLoss)}</div></div>
-                            <div><div style={{ fontSize:9, color:"#aaa" }}>BREAKEVEN</div><div style={{ fontSize:12, color:"#fff" }}>{C(cc.bestPut?.breakeven)}</div></div>
-                            <div><div style={{ fontSize:9, color:"#aaa" }}>REWARD</div><div style={{ fontSize:12, color:"#ffd60a" }}>{cc.bestPut?.reward}</div></div>
+                            <div><div style={{ fontSize:9, color:"#ccc" }}>PREMIUM</div><div style={{ fontSize:13, color:"#fff", fontWeight:700 }}>{C(cc.bestPut?.premium)}</div></div>
+                            <div><div style={{ fontSize:9, color:"#ccc" }}>MAX LOSS</div><div style={{ fontSize:13, color:"#ff6b6b", fontWeight:700 }}>{C(cc.bestPut?.maxLoss)}</div></div>
+                            <div><div style={{ fontSize:9, color:"#ccc" }}>BREAKEVEN</div><div style={{ fontSize:12, color:"#fff" }}>{C(cc.bestPut?.breakeven)}</div></div>
+                            <div><div style={{ fontSize:9, color:"#ccc" }}>REWARD</div><div style={{ fontSize:12, color:"#ffd60a" }}>{cc.bestPut?.reward}</div></div>
                           </div>
                           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                             <ProbRing value={cc.bestPut?.probability||0} size={44} />
-                            <div style={{ fontSize:10, color:"#ddd", flex:1, marginLeft:10, lineHeight:1.5 }}>{cc.bestPut?.whyThis}</div>
+                            <div style={{ fontSize:10, color:"#fff", flex:1, marginLeft:10, lineHeight:1.5 }}>{cc.bestPut?.whyThis}</div>
                           </div>
                         </div>
                       </div>
@@ -426,22 +453,22 @@ export default function App() {
                       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
                         <div style={{ background:"rgba(0,255,157,0.05)", border:"1px solid rgba(0,255,157,0.15)", borderRadius:6, padding:12 }}>
                           <div style={{ fontSize:9, color:"#00ff9d", letterSpacing:2, marginBottom:8 }}>✅ SIGNALS ALIGNED</div>
-                          {cc.pillarsAligned?.map((p,i) => <div key={i} style={{ fontSize:11, color:"#ddd", marginBottom:5, lineHeight:1.4 }}>• {p}</div>)}
+                          {cc.pillarsAligned?.map((p,i) => <div key={i} style={{ fontSize:11, color:"#fff", marginBottom:5, lineHeight:1.4 }}>• {p}</div>)}
                         </div>
                         <div style={{ background:"rgba(255,107,107,0.05)", border:"1px solid rgba(255,107,107,0.15)", borderRadius:6, padding:12 }}>
                           <div style={{ fontSize:9, color:"#ff6b6b", letterSpacing:2, marginBottom:8 }}>⚠ RISKS / AGAINST</div>
-                          {cc.pillarsAgainst?.map((p,i) => <div key={i} style={{ fontSize:11, color:"#ddd", marginBottom:5, lineHeight:1.4 }}>• {p}</div>)}
+                          {cc.pillarsAgainst?.map((p,i) => <div key={i} style={{ fontSize:11, color:"#fff", marginBottom:5, lineHeight:1.4 }}>• {p}</div>)}
                         </div>
                       </div>
                     </div>
-                    <div style={{ fontSize:9, color:"#333", textAlign:"center" }}>FOR INFORMATIONAL PURPOSES ONLY · NOT FINANCIAL ADVICE · OPTIONS TRADING INVOLVES SIGNIFICANT RISK</div>
+                    <div style={{ fontSize:9, color:"#666", textAlign:"center" }}>FOR INFORMATIONAL PURPOSES ONLY · NOT FINANCIAL ADVICE · OPTIONS TRADING INVOLVES SIGNIFICANT RISK</div>
                   </div>
                 )}
 
                 {/* ── PILLAR 1 IV ── */}
                 {resTab==="iv" && result.pillar1_iv && (
                   <div>
-                    <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:12 }}>🌡️ PILLAR 1 · IMPLIED VOLATILITY · {result.ticker} · {stamp}</div>
+                    <div style={{ fontSize:9, color:"#ccc", letterSpacing:2, marginBottom:12 }}>🌡️ PILLAR 1 · IMPLIED VOLATILITY · {result.ticker} · {stamp}</div>
                     <ScoreBar label="IV Score" score={result.pillar1_iv.ivScore} />
                     <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:8, marginBottom:10 }}>
                       <StatBox label="IMPLIED VOLATILITY" value={`${result.pillar1_iv.impliedVolatility}%`} sub={result.pillar1_iv.ivSignal} color="#fff" />
@@ -456,8 +483,8 @@ export default function App() {
                       <div style={{ fontSize:12, color:"#fff" }}>{result.pillar1_iv.ivCrushRisk}</div>
                     </div>
                     <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, padding:12 }}>
-                      <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:5 }}>💡 PLAIN ENGLISH</div>
-                      <div style={{ fontSize:12, color:"#ddd", lineHeight:1.7 }}>{result.pillar1_iv.explanation}</div>
+                      <div style={{ fontSize:9, color:"#ccc", letterSpacing:2, marginBottom:5 }}>💡 PLAIN ENGLISH</div>
+                      <div style={{ fontSize:12, color:"#fff", lineHeight:1.7 }}>{result.pillar1_iv.explanation}</div>
                       <button onClick={() => toggleSpeak(result.pillar1_iv.explanation)} style={{ marginTop:8, background:"none", border:"1px solid rgba(0,255,157,0.2)", borderRadius:4, color:"#00ff9d", fontSize:10, padding:"4px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>🔊 HEAR THIS</button>
                     </div>
                   </div>
@@ -466,12 +493,12 @@ export default function App() {
                 {/* ── PILLAR 2 FLOW ── */}
                 {resTab==="flow" && result.pillar2_flow && (
                   <div>
-                    <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:12 }}>🐋 PILLAR 2 · OPTIONS FLOW & UNUSUAL ACTIVITY · {result.ticker} · {stamp}</div>
+                    <div style={{ fontSize:9, color:"#ccc", letterSpacing:2, marginBottom:12 }}>🐋 PILLAR 2 · OPTIONS FLOW & UNUSUAL ACTIVITY · {result.ticker} · {stamp}</div>
                     <ScoreBar label="Flow Score" score={result.pillar2_flow.flowScore} />
                     <div style={{ background:`rgba(${result.pillar2_flow.flowSignal==="BULLISH"?"0,255,157":"255,107,107"},0.07)`, border:`1px solid rgba(${result.pillar2_flow.flowSignal==="BULLISH"?"0,255,157":"255,107,107"},0.25)`, borderRadius:8, padding:14, marginBottom:10 }}>
                       <div style={{ fontSize:9, color:result.pillar2_flow.flowSignal==="BULLISH"?"#00ff9d":"#ff6b6b", letterSpacing:2, marginBottom:6 }}>⚡ UNUSUAL OPTIONS ACTIVITY</div>
                       <div style={{ fontSize:14, color:"#fff", fontWeight:700, marginBottom:4 }}>{result.pillar2_flow.unusualActivity}</div>
-                      <div style={{ fontSize:11, color:"#ddd" }}>{result.pillar2_flow.bigMoneyMove}</div>
+                      <div style={{ fontSize:11, color:"#fff" }}>{result.pillar2_flow.bigMoneyMove}</div>
                     </div>
                     <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:8, marginBottom:10 }}>
                       <StatBox label="FLOW SIGNAL" value={result.pillar2_flow.flowSignal} color={result.pillar2_flow.flowSignal==="BULLISH"?"#00ff9d":"#ff6b6b"} />
@@ -481,8 +508,8 @@ export default function App() {
                       <StatBox label="DARK POOL" value={result.pillar2_flow.darkPoolPrints} color="#fff" />
                     </div>
                     <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, padding:12 }}>
-                      <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:5 }}>💡 PLAIN ENGLISH</div>
-                      <div style={{ fontSize:12, color:"#ddd", lineHeight:1.7 }}>{result.pillar2_flow.explanation}</div>
+                      <div style={{ fontSize:9, color:"#ccc", letterSpacing:2, marginBottom:5 }}>💡 PLAIN ENGLISH</div>
+                      <div style={{ fontSize:12, color:"#fff", lineHeight:1.7 }}>{result.pillar2_flow.explanation}</div>
                       <button onClick={() => toggleSpeak(result.pillar2_flow.explanation)} style={{ marginTop:8, background:"none", border:"1px solid rgba(0,255,157,0.2)", borderRadius:4, color:"#00ff9d", fontSize:10, padding:"4px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>🔊 HEAR THIS</button>
                     </div>
                   </div>
@@ -491,7 +518,7 @@ export default function App() {
                 {/* ── PILLAR 3 DELTA ── */}
                 {resTab==="delta" && result.pillar3_delta && (
                   <div>
-                    <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:12 }}>🎯 PILLAR 3 · DELTA & PROBABILITY · {result.ticker} · {stamp}</div>
+                    <div style={{ fontSize:9, color:"#ccc", letterSpacing:2, marginBottom:12 }}>🎯 PILLAR 3 · DELTA & PROBABILITY · {result.ticker} · {stamp}</div>
                     <ScoreBar label="Delta Score" score={result.pillar3_delta.deltaScore} />
                     <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:8, marginBottom:10 }}>
                       <StatBox label="RECOMMENDED DELTA" value={result.pillar3_delta.recommendedDelta} sub={result.pillar3_delta.deltaRationale} color="#00ff9d" />
@@ -502,8 +529,8 @@ export default function App() {
                       <StatBox label="VEGA EXPOSURE" value={result.pillar3_delta.vegaExposure} color="#fff" />
                     </div>
                     <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, padding:12 }}>
-                      <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:5 }}>💡 PLAIN ENGLISH</div>
-                      <div style={{ fontSize:12, color:"#ddd", lineHeight:1.7 }}>{result.pillar3_delta.explanation}</div>
+                      <div style={{ fontSize:9, color:"#ccc", letterSpacing:2, marginBottom:5 }}>💡 PLAIN ENGLISH</div>
+                      <div style={{ fontSize:12, color:"#fff", lineHeight:1.7 }}>{result.pillar3_delta.explanation}</div>
                       <button onClick={() => toggleSpeak(result.pillar3_delta.explanation)} style={{ marginTop:8, background:"none", border:"1px solid rgba(0,255,157,0.2)", borderRadius:4, color:"#00ff9d", fontSize:10, padding:"4px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>🔊 HEAR THIS</button>
                     </div>
                   </div>
@@ -512,7 +539,7 @@ export default function App() {
                 {/* ── PILLAR 4 OI ── */}
                 {resTab==="oi" && result.pillar4_oi && (
                   <div>
-                    <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:12 }}>📊 PILLAR 4 · OPEN INTEREST & MAX PAIN · {result.ticker} · {stamp}</div>
+                    <div style={{ fontSize:9, color:"#ccc", letterSpacing:2, marginBottom:12 }}>📊 PILLAR 4 · OPEN INTEREST & MAX PAIN · {result.ticker} · {stamp}</div>
                     <ScoreBar label="OI Score" score={result.pillar4_oi.oiScore} />
                     <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:8, marginBottom:10 }}>
                       <StatBox label="MAX PAIN STRIKE" value={C(result.pillar4_oi.maxPainStrike)} sub="Stock tends to drift here at expiry" color="#ffd60a" />
@@ -523,8 +550,8 @@ export default function App() {
                       <StatBox label="PIN RISK" value={result.pillar4_oi.pinRisk} color={result.pillar4_oi.pinRisk==="LOW"?"#00ff9d":"#ffd60a"} />
                     </div>
                     <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, padding:12 }}>
-                      <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:5 }}>💡 PLAIN ENGLISH</div>
-                      <div style={{ fontSize:12, color:"#ddd", lineHeight:1.7 }}>{result.pillar4_oi.explanation}</div>
+                      <div style={{ fontSize:9, color:"#ccc", letterSpacing:2, marginBottom:5 }}>💡 PLAIN ENGLISH</div>
+                      <div style={{ fontSize:12, color:"#fff", lineHeight:1.7 }}>{result.pillar4_oi.explanation}</div>
                       <button onClick={() => toggleSpeak(result.pillar4_oi.explanation)} style={{ marginTop:8, background:"none", border:"1px solid rgba(0,255,157,0.2)", borderRadius:4, color:"#00ff9d", fontSize:10, padding:"4px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>🔊 HEAR THIS</button>
                     </div>
                   </div>
@@ -533,7 +560,7 @@ export default function App() {
                 {/* ── PILLAR 5 CATALYST ── */}
                 {resTab==="catalyst" && result.pillar5_catalyst && (
                   <div>
-                    <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:12 }}>📅 PILLAR 5 · CATALYSTS & EARNINGS · {result.ticker} · {stamp}</div>
+                    <div style={{ fontSize:9, color:"#ccc", letterSpacing:2, marginBottom:12 }}>📅 PILLAR 5 · CATALYSTS & EARNINGS · {result.ticker} · {stamp}</div>
                     <ScoreBar label="Catalyst Score" score={result.pillar5_catalyst.catalystScore} />
                     <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:8, marginBottom:10 }}>
                       <StatBox label="NEXT EARNINGS" value={result.pillar5_catalyst.nextEarnings} sub={`${result.pillar5_catalyst.daysToEarnings} days away`} color="#ffd60a" />
@@ -553,8 +580,8 @@ export default function App() {
                       <div style={{ fontSize:12, color:"#fff" }}>{result.pillar5_catalyst.ivCrushWarning}</div>
                     </div>
                     <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:6, padding:12 }}>
-                      <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:5 }}>💡 PLAIN ENGLISH</div>
-                      <div style={{ fontSize:12, color:"#ddd", lineHeight:1.7 }}>{result.pillar5_catalyst.explanation}</div>
+                      <div style={{ fontSize:9, color:"#ccc", letterSpacing:2, marginBottom:5 }}>💡 PLAIN ENGLISH</div>
+                      <div style={{ fontSize:12, color:"#fff", lineHeight:1.7 }}>{result.pillar5_catalyst.explanation}</div>
                       <button onClick={() => toggleSpeak(result.pillar5_catalyst.explanation)} style={{ marginTop:8, background:"none", border:"1px solid rgba(0,255,157,0.2)", borderRadius:4, color:"#00ff9d", fontSize:10, padding:"4px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace" }}>🔊 HEAR THIS</button>
                     </div>
                   </div>
@@ -563,7 +590,7 @@ export default function App() {
                 {/* ── CALLS ── */}
                 {resTab==="calls" && (
                   <div>
-                    <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:10 }}>▲ TOP 5 CALLS · {result.ticker} @ {C(result.currentPrice)} · {currency.flag} {currency.code} · {stamp}</div>
+                    <div style={{ fontSize:9, color:"#ccc", letterSpacing:2, marginBottom:10 }}>▲ TOP 5 CALLS · {result.ticker} @ {C(result.currentPrice)} · {currency.flag} {currency.code} · {stamp}</div>
                     {result.topCalls?.map((opt,i) => <StrikeCard key={i} opt={opt} accent="#00ff9d" stamp={stamp} currency={currency} />)}
                   </div>
                 )}
@@ -571,7 +598,7 @@ export default function App() {
                 {/* ── PUTS ── */}
                 {resTab==="puts" && (
                   <div>
-                    <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:10 }}>▼ TOP 5 PUTS · {result.ticker} @ {C(result.currentPrice)} · {currency.flag} {currency.code} · {stamp}</div>
+                    <div style={{ fontSize:9, color:"#ccc", letterSpacing:2, marginBottom:10 }}>▼ TOP 5 PUTS · {result.ticker} @ {C(result.currentPrice)} · {currency.flag} {currency.code} · {stamp}</div>
                     {result.topPuts?.map((opt,i) => <StrikeCard key={i} opt={opt} accent="#ff6b6b" stamp={stamp} currency={currency} />)}
                   </div>
                 )}
@@ -579,7 +606,7 @@ export default function App() {
                 {/* ── FUNDAMENTALS ── */}
                 {resTab==="fundamentals" && result.fundamentals && (
                   <div>
-                    <div style={{ fontSize:9, color:"#aaa", letterSpacing:2, marginBottom:10 }}>📋 FUNDAMENTALS · {result.ticker} · {currency.flag} {currency.code} · {stamp}</div>
+                    <div style={{ fontSize:9, color:"#ccc", letterSpacing:2, marginBottom:10 }}>📋 FUNDAMENTALS · {result.ticker} · {currency.flag} {currency.code} · {stamp}</div>
                     <div style={{ display:"grid", gridTemplateColumns:"repeat(2,1fr)", gap:8 }}>
                       <StatBox label="CURRENT PRICE" value={C(result.currentPrice)} color="#fff" />
                       <StatBox label="P/E RATIO" value={result.fundamentals.peRatio} sub="Higher = growth expectations" color="#ffd60a" />
@@ -607,9 +634,9 @@ export default function App() {
             {!result && !loading && !error && (
               <div style={{ textAlign:"center", padding:"40px 20px" }}>
                 <div style={{ fontSize:40, marginBottom:12 }}>🎯</div>
-                <div style={{ fontSize:11, letterSpacing:2, color:"#555", marginBottom:6 }}>ENTER ANY STOCK TICKER TO BEGIN</div>
-                <div style={{ fontSize:10, color:"#333" }}>Try: AAPL · TSLA · NVDA · MSFT · AMZN · SPY · META · GOOGL</div>
-                <div style={{ marginTop:16, fontSize:10, color:"#333" }}>
+                <div style={{ fontSize:11, letterSpacing:2, color:"#888", marginBottom:6 }}>ENTER ANY STOCK TICKER TO BEGIN</div>
+                <div style={{ fontSize:10, color:"#666" }}>Try: AAPL · TSLA · NVDA · MSFT · AMZN · SPY · META · GOOGL</div>
+                <div style={{ marginTop:16, fontSize:10, color:"#666" }}>
                   New to options? Check the <button onClick={() => setMainTab("learn")} style={{ background:"none", border:"none", color:"#00ff9d", cursor:"pointer", fontFamily:"'Courier New',monospace", fontSize:10, padding:0 }}>LEARN</button> tab first.
                 </div>
               </div>
@@ -620,13 +647,13 @@ export default function App() {
         {/* ── LEARN TAB ── */}
         {mainTab === "learn" && (
           <div>
-            <div style={{ fontSize:12, color:"#ddd", lineHeight:1.7, marginBottom:16 }}>The 5 pillars every options trader needs to understand — explained simply, with read-aloud on every lesson.</div>
+            <div style={{ fontSize:12, color:"#fff", lineHeight:1.7, marginBottom:16 }}>The 5 pillars every options trader needs to understand — explained simply, with read-aloud on every lesson.</div>
             {LEARN.map((item,i) => (
               <div key={i} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.09)", borderRadius:8, padding:14, marginBottom:10 }}>
                 <div style={{ display:"flex", justifyContent:"space-between", gap:10 }}>
                   <div style={{ flex:1 }}>
                     <div style={{ fontSize:13, fontWeight:700, color:"#fff", marginBottom:7 }}>{item.icon} {item.title}</div>
-                    <div style={{ fontSize:12, color:"#ddd", lineHeight:1.7 }}>{item.body}</div>
+                    <div style={{ fontSize:12, color:"#fff", lineHeight:1.7 }}>{item.body}</div>
                   </div>
                   <button onClick={() => toggleSpeak(item.speak)} style={{ background:"rgba(0,255,157,0.07)", border:"1px solid rgba(0,255,157,0.2)", borderRadius:6, color:"#00ff9d", fontSize:16, padding:"5px 10px", cursor:"pointer", flexShrink:0 }}>🔊</button>
                 </div>
@@ -638,16 +665,16 @@ export default function App() {
         {/* ── FAQ TAB ── */}
         {mainTab === "faq" && (
           <div>
-            <div style={{ fontSize:11, color:"#aaa", marginBottom:16 }}>Top questions options traders ask — answered plainly with read-aloud on every answer.</div>
+            <div style={{ fontSize:11, color:"#ccc", marginBottom:16 }}>Top questions options traders ask — answered plainly with read-aloud on every answer.</div>
             {FAQS.map((item,i) => (
               <div key={i} style={{ background:"rgba(255,255,255,0.03)", border:`1px solid ${openFaq===i?"rgba(0,255,157,0.25)":"rgba(255,255,255,0.09)"}`, borderRadius:8, marginBottom:10, overflow:"hidden" }}>
                 <button onClick={() => { setOpenFaq(openFaq===i?null:i); stopSpeak(); }} style={{ width:"100%", background:"none", border:"none", padding:"13px 14px", textAlign:"left", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center", gap:10 }}>
                   <span style={{ fontSize:12, color:"#fff", fontFamily:"'Courier New',monospace", fontWeight:700, lineHeight:1.4 }}>{item.q}</span>
-                  <span style={{ color:"#666", fontSize:13, flexShrink:0 }}>{openFaq===i?"▲":"▼"}</span>
+                  <span style={{ color:"#999", fontSize:13, flexShrink:0 }}>{openFaq===i?"▲":"▼"}</span>
                 </button>
                 {openFaq===i && (
                   <div style={{ padding:"0 14px 14px" }}>
-                    <div style={{ fontSize:12, color:"#ddd", lineHeight:1.8, marginBottom:10 }}>{item.a}</div>
+                    <div style={{ fontSize:12, color:"#fff", lineHeight:1.8, marginBottom:10 }}>{item.a}</div>
                     <button onClick={() => toggleSpeak(item.speak)} style={{ background:"rgba(0,255,157,0.07)", border:"1px solid rgba(0,255,157,0.2)", borderRadius:6, color:"#00ff9d", fontSize:9, padding:"5px 12px", cursor:"pointer", fontFamily:"'Courier New',monospace", letterSpacing:2 }}>🔊 HEAR THIS</button>
                   </div>
                 )}
@@ -655,7 +682,7 @@ export default function App() {
             ))}
             <div style={{ background:"rgba(255,214,10,0.05)", border:"1px solid rgba(255,214,10,0.15)", borderRadius:8, padding:14, marginTop:4 }}>
               <div style={{ fontSize:10, color:"#ffd60a", fontWeight:700, marginBottom:6 }}>⚠ ALWAYS REMEMBER</div>
-              <div style={{ fontSize:11, color:"#ddd", lineHeight:1.7 }}>This app is an analysis tool — not a financial advisor. Options trading involves real risk of loss. Start small, use paper trading to practice, and never risk money you need for bills or emergencies.</div>
+              <div style={{ fontSize:11, color:"#fff", lineHeight:1.7 }}>This app is an analysis tool — not a financial advisor. Options trading involves real risk of loss. Start small, use paper trading to practice, and never risk money you need for bills or emergencies.</div>
             </div>
           </div>
         )}
