@@ -110,7 +110,7 @@ function CurrencySelector({ currency, onChange }) {
 }
 
 // ── API CALL ──────────────────────────────────────────────────────────────────
-const BACKEND_URL = "https://probability-engine-production-7250.up.railway.app";
+const BACKEND_URL = "https://probability-engine-production-04e9.up.railway.app";
 
 // Fetch real live price from backend proxy
 async function fetchLivePrice(ticker) {
