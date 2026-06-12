@@ -87,11 +87,11 @@ function CurrencySelector({ currency, onChange }) {
       <button onClick={() => setOpen(!open)} style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(0,255,157,0.3)", borderRadius:6, padding:"6px 12px", color:"#fff", fontSize:11, fontFamily:"'Courier New',monospace", cursor:"pointer", display:"flex", alignItems:"center", gap:6 }}>
         <span>{currency.flag}</span>
         <span style={{ color:"#00ff9d", fontWeight:700 }}>{currency.code}</span>
-        <span style={{ color:"#999", fontSize:9 }}>{open ? "▲" : "▼"}</span>
+        <span style={{ color:"#ddd", fontSize:9 }}>{open ? "▲" : "▼"}</span>
       </button>
       {open && (
         <div style={{ position:"fixed", right:14, zIndex:999, background:"#0d1520", border:"1px solid rgba(0,255,157,0.25)", borderRadius:8, width:220, maxHeight:"60vh", overflowY:"auto", boxShadow:"0 8px 32px rgba(0,0,0,0.9)", bottom:80 }}>
-          <div style={{ padding:"7px 12px", fontSize:9, color:"#999", letterSpacing:2, borderBottom:"1px solid rgba(255,255,255,0.07)", position:"sticky", top:0, background:"#0d1520" }}>SELECT DISPLAY CURRENCY</div>
+          <div style={{ padding:"7px 12px", fontSize:9, color:"#ddd", letterSpacing:2, borderBottom:"1px solid rgba(255,255,255,0.07)", position:"sticky", top:0, background:"#0d1520" }}>SELECT DISPLAY CURRENCY</div>
           {CURRENCIES.map(c => (
             <button key={c.code} onClick={() => { onChange(c); setOpen(false); }} style={{ width:"100%", background:c.code===currency.code?"rgba(0,255,157,0.08)":"none", border:"none", padding:"8px 12px", textAlign:"left", cursor:"pointer", display:"flex", alignItems:"center", gap:10, fontFamily:"'Courier New',monospace" }}>
               <span style={{ fontSize:15 }}>{c.flag}</span>
@@ -102,7 +102,7 @@ function CurrencySelector({ currency, onChange }) {
               {c.code===currency.code && <span style={{ color:"#00ff9d" }}>✓</span>}
             </button>
           ))}
-          <div style={{ padding:"6px 12px", fontSize:8, color:"#666", borderTop:"1px solid rgba(255,255,255,0.05)" }}>SIMULATED RATES · CONNECT EXCHANGERATE-API FOR LIVE</div>
+          <div style={{ padding:"6px 12px", fontSize:8, color:"#bbb", borderTop:"1px solid rgba(255,255,255,0.05)" }}>SIMULATED RATES · CONNECT EXCHANGERATE-API FOR LIVE</div>
         </div>
       )}
     </div>
@@ -117,8 +117,7 @@ async function fetchLivePrice(ticker) {
   try {
     const res = await fetch(`${BACKEND_URL}/api/price/${ticker.toUpperCase()}`, {
       method: "GET",
-      mode: "cors",
-      headers: { "Accept": "application/json" },
+      headers: { "Content-Type": "application/json" },
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
@@ -130,11 +129,11 @@ async function fetchLivePrice(ticker) {
   }
 }
 
-async function analyzeStock(ticker) {
+async function analyzeStock(ticker, livePrice) {
   const res = await fetch(`${BACKEND_URL}/api/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ticker: ticker.toUpperCase().trim() })
+    body: JSON.stringify({ ticker: ticker.toUpperCase().trim(), currentPrice: livePrice || null })
   });
   const data = await res.json();
   if (data.error) throw new Error(data.error);
@@ -281,11 +280,9 @@ export default function App() {
     if (!ticker.trim() || loading) return;
     setLoading(true); setError(null); setResult(null);
     try {
-      // Fetch AI analysis and live price in parallel
-      const [data, priceData] = await Promise.all([
-        analyzeStock(ticker.trim()),
-        fetchLivePrice(ticker.trim())
-      ]);
+      // Fetch live price first, then pass it to AI so analysis uses real price
+      const priceData = await fetchLivePrice(ticker.trim());
+      const data = await analyzeStock(ticker.trim(), priceData?.price);
       if (priceData?.price) {
         data.currentPrice = priceData.price;
         data.priceChange = priceData.change;
@@ -319,7 +316,7 @@ export default function App() {
               <div style={{ width:7, height:7, borderRadius:"50%", background:"#00ff9d", boxShadow:"0 0 10px #00ff9d" }} />
               <span style={{ fontSize:9, color:"#00ff9d", letterSpacing:4 }}>OPTIONS INTELLIGENCE</span>
             </div>
-            <h1 style={{ fontSize:22, fontWeight:700, margin:0, letterSpacing:-1 }}>PROBABILITY ENGINE <span style={{ fontSize:11, color:"#666", fontWeight:400 }}>PRO</span></h1>
+            <h1 style={{ fontSize:22, fontWeight:700, margin:0, letterSpacing:-1 }}>PROBABILITY ENGINE <span style={{ fontSize:11, color:"#bbb", fontWeight:400 }}>PRO</span></h1>
             <p style={{ margin:"2px 0 0", fontSize:9, color:"#bbb", letterSpacing:2 }}>5-PILLAR OPTIONS ANALYSIS · AI COMMAND CENTER</p>
           </div>
           <CurrencySelector currency={currency} onChange={setCurrency} />
@@ -355,7 +352,7 @@ export default function App() {
                 <div style={{ display:"flex", justifyContent:"center", gap:6 }}>
                   {[0,1,2,3,4].map(i => <div key={i} style={{ width:6, height:6, borderRadius:"50%", background:"#00ff9d", animation:`pulse 1.2s ${i*0.2}s ease-in-out infinite` }} />)}
                 </div>
-                <div style={{ marginTop:16, fontSize:9, color:"#666" }}>IV · FLOW · DELTA · OI · CATALYSTS</div>
+                <div style={{ marginTop:16, fontSize:9, color:"#bbb" }}>IV · FLOW · DELTA · OI · CATALYSTS</div>
                 <style>{`@keyframes pulse{0%,100%{opacity:.15;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}`}</style>
               </div>
             )}
@@ -381,20 +378,20 @@ export default function App() {
                         </span>
                       )}
                     </div>
-                    {currency.code!=="USD" && <div style={{ fontSize:9, color:"#888" }}>USD ${fmt(result.currentPrice)} · 1 USD = {currency.rate} {currency.code}</div>}
+                    {currency.code!=="USD" && <div style={{ fontSize:9, color:"#ddd" }}>USD ${fmt(result.currentPrice)} · 1 USD = {currency.rate} {currency.code}</div>}
                     {result.livePrice && result.priceOpen && (
                       <div style={{ display:"flex", gap:12, marginTop:4 }}>
-                        <span style={{ fontSize:10, color:"#888" }}>O <span style={{ color:"#fff" }}>{C(result.priceOpen)}</span></span>
-                        <span style={{ fontSize:10, color:"#888" }}>H <span style={{ color:"#00ff9d" }}>{C(result.priceHigh)}</span></span>
-                        <span style={{ fontSize:10, color:"#888" }}>L <span style={{ color:"#ff6b6b" }}>{C(result.priceLow)}</span></span>
+                        <span style={{ fontSize:10, color:"#ddd" }}>O <span style={{ color:"#fff" }}>{C(result.priceOpen)}</span></span>
+                        <span style={{ fontSize:10, color:"#ddd" }}>H <span style={{ color:"#00ff9d" }}>{C(result.priceHigh)}</span></span>
+                        <span style={{ fontSize:10, color:"#ddd" }}>L <span style={{ color:"#ff6b6b" }}>{C(result.priceLow)}</span></span>
                       </div>
                     )}
                   </div>
                   <div style={{ textAlign:"right" }}>
                     <div style={{ fontSize:18, fontWeight:700, color:dc }}>{cc?.verdict} <span style={{ fontSize:12, color:"#ccc" }}>{cc?.verdictStrength}</span></div>
                     <div style={{ fontSize:11, color:"#fff", marginTop:2 }}>Confidence: <span style={{ color:probColor(cc?.confidenceScore) }}>{cc?.confidenceScore}%</span></div>
-                    <div style={{ fontSize:10, color:"#888", marginTop:3 }}>📡 {result.dataSource}</div>
-                    <div style={{ fontSize:10, color:"#888" }}>🕐 {stamp}</div>
+                    <div style={{ fontSize:10, color:"#ddd", marginTop:3 }}>📡 {result.dataSource}</div>
+                    <div style={{ fontSize:10, color:"#ddd" }}>🕐 {stamp}</div>
                   </div>
                 </div>
 
@@ -485,7 +482,7 @@ export default function App() {
                         </div>
                       </div>
                     </div>
-                    <div style={{ fontSize:9, color:"#666", textAlign:"center" }}>FOR INFORMATIONAL PURPOSES ONLY · NOT FINANCIAL ADVICE · OPTIONS TRADING INVOLVES SIGNIFICANT RISK</div>
+                    <div style={{ fontSize:9, color:"#bbb", textAlign:"center" }}>FOR INFORMATIONAL PURPOSES ONLY · NOT FINANCIAL ADVICE · OPTIONS TRADING INVOLVES SIGNIFICANT RISK</div>
                   </div>
                 )}
 
@@ -658,9 +655,9 @@ export default function App() {
             {!result && !loading && !error && (
               <div style={{ textAlign:"center", padding:"40px 20px" }}>
                 <div style={{ fontSize:40, marginBottom:12 }}>🎯</div>
-                <div style={{ fontSize:11, letterSpacing:2, color:"#888", marginBottom:6 }}>ENTER ANY STOCK TICKER TO BEGIN</div>
-                <div style={{ fontSize:10, color:"#666" }}>Try: AAPL · TSLA · NVDA · MSFT · AMZN · SPY · META · GOOGL</div>
-                <div style={{ marginTop:16, fontSize:10, color:"#666" }}>
+                <div style={{ fontSize:11, letterSpacing:2, color:"#ddd", marginBottom:6 }}>ENTER ANY STOCK TICKER TO BEGIN</div>
+                <div style={{ fontSize:10, color:"#bbb" }}>Try: AAPL · TSLA · NVDA · MSFT · AMZN · SPY · META · GOOGL</div>
+                <div style={{ marginTop:16, fontSize:10, color:"#bbb" }}>
                   New to options? Check the <button onClick={() => setMainTab("learn")} style={{ background:"none", border:"none", color:"#00ff9d", cursor:"pointer", fontFamily:"'Courier New',monospace", fontSize:10, padding:0 }}>LEARN</button> tab first.
                 </div>
               </div>
@@ -694,7 +691,7 @@ export default function App() {
               <div key={i} style={{ background:"rgba(255,255,255,0.03)", border:`1px solid ${openFaq===i?"rgba(0,255,157,0.25)":"rgba(255,255,255,0.09)"}`, borderRadius:8, marginBottom:10, overflow:"hidden" }}>
                 <button onClick={() => { setOpenFaq(openFaq===i?null:i); stopSpeak(); }} style={{ width:"100%", background:"none", border:"none", padding:"13px 14px", textAlign:"left", cursor:"pointer", display:"flex", justifyContent:"space-between", alignItems:"center", gap:10 }}>
                   <span style={{ fontSize:12, color:"#fff", fontFamily:"'Courier New',monospace", fontWeight:700, lineHeight:1.4 }}>{item.q}</span>
-                  <span style={{ color:"#999", fontSize:13, flexShrink:0 }}>{openFaq===i?"▲":"▼"}</span>
+                  <span style={{ color:"#ddd", fontSize:13, flexShrink:0 }}>{openFaq===i?"▲":"▼"}</span>
                 </button>
                 {openFaq===i && (
                   <div style={{ padding:"0 14px 14px" }}>
