@@ -115,11 +115,17 @@ const BACKEND_URL = "https://probability-engine-production-04e9.up.railway.app";
 // Fetch real live price from backend proxy
 async function fetchLivePrice(ticker) {
   try {
-    const res = await fetch(`${BACKEND_URL}/api/price/${ticker.toUpperCase()}`);
+    const res = await fetch(`${BACKEND_URL}/api/price/${ticker.toUpperCase()}`, {
+      method: "GET",
+      mode: "cors",
+      headers: { "Accept": "application/json" },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     if (data.price) return data;
     return null;
-  } catch {
+  } catch(e) {
+    console.error("Live price fetch failed:", e.message);
     return null;
   }
 }
