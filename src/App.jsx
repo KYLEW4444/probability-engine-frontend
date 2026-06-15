@@ -110,7 +110,7 @@ function CurrencySelector({ currency, onChange }) {
 }
 
 // ── API CALL ──────────────────────────────────────────────────────────────────
-const BACKEND_URL = "https://probability-engine-production-04e9.up.railway.app";
+const BACKEND_URL = "https://options-probability-engine-production-04e9.up.railway.app";
 
 // Fetch real live price from backend proxy
 async function fetchLivePrice(ticker) {
@@ -316,7 +316,7 @@ export default function App() {
               <div style={{ width:7, height:7, borderRadius:"50%", background:"#00ff9d", boxShadow:"0 0 10px #00ff9d" }} />
               <span style={{ fontSize:9, color:"#00ff9d", letterSpacing:4 }}>OPTIONS INTELLIGENCE</span>
             </div>
-            <h1 style={{ fontSize:22, fontWeight:700, margin:0, letterSpacing:-1 }}>PROBABILITY ENGINE <span style={{ fontSize:11, color:"#bbb", fontWeight:400 }}>PRO</span></h1>
+            <h1 style={{ fontSize:22, fontWeight:700, margin:0, letterSpacing:-1 }}>OPTIONS PROBABILITY ENGINE <span style={{ fontSize:11, color:"#bbb", fontWeight:400 }}>PRO</span></h1>
             <p style={{ margin:"2px 0 0", fontSize:9, color:"#bbb", letterSpacing:2 }}>5-PILLAR OPTIONS ANALYSIS · AI COMMAND CENTER</p>
           </div>
           <CurrencySelector currency={currency} onChange={setCurrency} />
