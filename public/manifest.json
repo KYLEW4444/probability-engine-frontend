@@ -1,6 +1,6 @@
 {
-  "name": "Probability Engine",
-  "short_name": "ProbEngine",
+  "name": "Options Probability Engine",
+  "short_name": "OPE",
   "description": "AI-powered options trading analysis",
   "start_url": "/",
   "display": "standalone",
